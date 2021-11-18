@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.VisualBasic.FileIO;
 
 namespace SupportBank
@@ -28,35 +25,18 @@ namespace SupportBank
     public class Account
     {
         public string Name;
-        public double Balance => _CalculateBalance();
-        public List<Transaction> Transactions = new List<Transaction>();
+        public double Balance = 0;
 
         public Account(string name)
         {
             Name = name;
-        }
-
-        private double _CalculateBalance()
-        {
-            double balance = 0;
-            foreach (Transaction transaction in Transactions)
-            {
-                if (transaction.To == this)
-                {
-                    balance += transaction.Amount;
-                }
-                else if (transaction.From == this)
-                {
-                    balance -= transaction.Amount;
-                }
-            }
-            return balance;
         }
     }
 
     public class Bank
     {
         public List<Account> Accounts { get; } = new List<Account>();
+        public List<Transaction> Transactions = new List<Transaction>();
 
         public Account GetAccount(string name)
         {
@@ -72,12 +52,15 @@ namespace SupportBank
             }
         }
 
-        public void CreateTransaction(DateTime date, Account fromAccount, Account toAccount, string narrative,
+        public void CreateTransaction(DateTime date, string from, string to, string narrative,
             double amount)
         {
+            Account fromAccount = this.GetAccount(from);
+            Account toAccount = this.GetAccount(to);
             Transaction transaction = new Transaction(date, fromAccount, toAccount, narrative, amount);
-            fromAccount.Transactions.Add(transaction);
-            toAccount.Transactions.Add(transaction);
+            
+            fromAccount.Balance -= amount;
+            toAccount.Balance += amount;
         }
     }
 
@@ -103,9 +86,7 @@ namespace SupportBank
                 string narrative = fields[3];
                 double amount = Convert.ToDouble(fields[4]);
 
-                Account fromAccount = bank.GetAccount(from);
-                Account toAccount = bank.GetAccount(to);
-                bank.CreateTransaction(date, fromAccount, toAccount, narrative, amount);
+                bank.CreateTransaction(date, from, to, narrative, amount);
             }
 
             if (args[0].ToLower() == "list")
@@ -124,7 +105,7 @@ namespace SupportBank
                     
                     Console.WriteLine("Transactions for: " + name);
                     
-                    foreach (Transaction transaction in account.Transactions)
+                    foreach (Transaction transaction in bank.Transactions.FindAll(t => t.From == account || t.To == account))
                     {
                         string direction = "IN ";
                         string qualifier = "from";
