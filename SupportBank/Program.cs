@@ -120,8 +120,10 @@ namespace SupportBank
                 else
                 {
                     string name = args[1] + " " + args[2];
-                    Console.WriteLine(name);
                     Account account = bank.GetAccount(name);
+                    
+                    Console.WriteLine("Transactions for: " + name);
+                    
                     foreach (Transaction transaction in account.Transactions)
                     {
                         string direction = "IN ";
